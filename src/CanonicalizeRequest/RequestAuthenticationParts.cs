@@ -15,8 +15,7 @@ namespace CanonicalizeRequest
         public string Signature;
         public static RequestAuthenticationParts MakeFromRequest(HttpRequest req)
         {
-            StringValues signedHeadersValues;
-            if (!req.Headers.TryGetValue("SignedHeaders", out signedHeadersValues))
+            if (!req.Headers.TryGetValue("SignedHeaders", out StringValues signedHeadersValues))
             {
                 throw new ArgumentException("SignedHeaders header not present");
             }
@@ -44,7 +43,7 @@ namespace CanonicalizeRequest
                 var algorithm = sigParts[0];
                 // TODO verify algorithm
                 var key = sigParts[1];
-                long timestamp = 0;
+                long timestamp;
                 try
                 {
                     timestamp = long.Parse(sigParts[2]);
