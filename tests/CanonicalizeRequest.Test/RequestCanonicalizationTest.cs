@@ -69,7 +69,7 @@ namespace CanonicalizeRequest.Tests
         public void HttpBodyCanonicalizedCorrectly()
         {
             var body = "foobar";
-            Assert.Equal("3858F62230AC3C915F300C664312C63F", RequestCanonicalization.CanonicalizeRequestBody(body));
+            Assert.Equal("3858f62230ac3c915f300c664312c63f", RequestCanonicalization.CanonicalizeRequestBody(body));
         }
     }
 }
