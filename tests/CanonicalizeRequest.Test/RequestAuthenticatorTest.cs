@@ -10,14 +10,14 @@ namespace CanonicalizeRequest.Tests
         [Fact]
         public void RequestNotAuthenticWhenMakeFromRequestErrors()
         {
-            var auth = new RequestAuthenticator(null, 0);
+            var auth = RequestAuthenticator.New(null, 0);
             Assert.False(auth.IsRequestAuthentic(MockHttpRequest.MakeWith(new Dictionary<string, IEnumerable<string>>())));
         }
         [Fact]
         public void RequestNotAuthenticIfTimestampTooFarAhead()
         {
             var tolerance = 10;
-            var auth = new RequestAuthenticator(null, tolerance);
+            var auth = RequestAuthenticator.New(null, tolerance);
             var now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds + tolerance * 2;
             Assert.False(auth.IsRequestAuthentic(MockHttpRequest.MakeWith(new Dictionary<string, IEnumerable<string>>()
             {
@@ -29,7 +29,7 @@ namespace CanonicalizeRequest.Tests
         public void RequestNotAuthenticIfTimestampTooFarBehind()
         {
             var tolerance = 10;
-            var auth = new RequestAuthenticator(null, tolerance);
+            var auth = RequestAuthenticator.New(null, tolerance);
             var now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds - tolerance * 2;
             Assert.False(auth.IsRequestAuthentic(MockHttpRequest.MakeWith(new Dictionary<string, IEnumerable<string>>()
             {
@@ -42,7 +42,7 @@ namespace CanonicalizeRequest.Tests
         {
             var mockVerifier = new MockCryptoVerifier(() => false);
             var tolerance = 10;
-            var auth = new RequestAuthenticator(mockVerifier, tolerance);
+            var auth = RequestAuthenticator.New(mockVerifier, tolerance);
             var now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
             Assert.False(auth.IsRequestAuthentic(MockHttpRequest.MakeWith(
                 "GET", "/", new Dictionary<string, IEnumerable<string>>(), new Dictionary<string, IEnumerable<string>>()
@@ -61,7 +61,7 @@ namespace CanonicalizeRequest.Tests
         {
             var mockVerifier = new MockCryptoVerifier(() => true);
             var tolerance = 10;
-            var auth = new RequestAuthenticator(mockVerifier, tolerance);
+            var auth = RequestAuthenticator.New(mockVerifier, tolerance);
             var now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
             Assert.True(auth.IsRequestAuthentic(MockHttpRequest.MakeWith(
                 "GET", "/", new Dictionary<string, IEnumerable<string>>(), new Dictionary<string, IEnumerable<string>>()

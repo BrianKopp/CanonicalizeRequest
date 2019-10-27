@@ -7,23 +7,28 @@ namespace CanonicalizeRequest
     {
         private readonly long SecondsDriftAllowed;
         private readonly ICryptoVerifier Verifier;
-        public RequestAuthenticator(ICryptoVerifier verifier, long secondsDriftAllowed)
+        private readonly IRequestCanonicalizer Canonicalizer;
+        private readonly IRequestPartMaker PartMaker;
+        public RequestAuthenticator(IRequestPartMaker maker, ICryptoVerifier verifier,
+            IRequestCanonicalizer canonicalizer, long secondsDriftAllowed)
         {
+            PartMaker = maker;
             Verifier = verifier;
             SecondsDriftAllowed = secondsDriftAllowed;
+            Canonicalizer = canonicalizer;
         }
         public bool IsRequestAuthentic(HttpRequest request)
         {
             try
             {
-                var parts = RequestAuthenticationParts.MakeFromRequest(request);
+                var parts = PartMaker.MakeFromRequest(request);
                 if (!IsTimestampValid(parts.SignatureTimestamp, GetCurrentTimestamp()))
                 {
                     return false;
                 }
 
-                var canonicalRepresentation = RequestCanonicalizer.CanonicalRepresentation(request);
-                var stringToSign = RequestCanonicalizer.CreateStringToSign(
+                var canonicalRepresentation = Canonicalizer.MakeCanonicalRepresentation(request);
+                var stringToSign = Canonicalizer.MakeStringToSign(
                     parts.SignatureAlgorithm, parts.SignatureTimestamp, canonicalRepresentation);
 
                 return Verifier.VerifyText(parts.SignatureAlgorithm, parts.SignatureKey,
@@ -42,6 +47,11 @@ namespace CanonicalizeRequest
         {
             return (timestamp <= (currentTimestamp + SecondsDriftAllowed))
                 && (timestamp >= (currentTimestamp - SecondsDriftAllowed));
+        }
+        public static RequestAuthenticator New(ICryptoVerifier verifier, long secondsDriftAllowed)
+        {
+            return new RequestAuthenticator(new RequestPartMaker(),
+                verifier, new RequestCanonicalizer(), secondsDriftAllowed);
         }
     }
 }
