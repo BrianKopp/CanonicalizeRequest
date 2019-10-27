@@ -31,13 +31,14 @@ namespace CanonicalizeRequest
             string httpPath,
             IEnumerable<KeyValuePair<string, StringValues>> queryParameters,
             IDictionary<string, StringValues> headers,
-            string signedHeaders,
+            IEnumerable<string> signedHeaders,
             string body)
         {
+            var signedHeadersSubDict = headers.Where(h => signedHeaders.Contains(h.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             return CanonicalizeMethod(httpMethod) + "\n"
                 + CanonicalizePath(httpPath) + "\n"
                 + CanonicalizeQueryParameters(queryParameters) + "\n"
-                + CanonicalizeHeaders(headers) + "\n"
+                + CanonicalizeHeaders(signedHeadersSubDict) + "\n"
                 + CanonicalizeSignedHeaders(signedHeaders) + "\n"
                 + CanonicalizeRequestBody(body);
         }
@@ -105,9 +106,9 @@ namespace CanonicalizeRequest
 
             return string.Join("\n", headerRepresentations);
         }
-        public static string CanonicalizeSignedHeaders(string signedHeaders)
+        public static string CanonicalizeSignedHeaders(IEnumerable<string> signedHeaders)
         {
-            return string.Join(";", signedHeaders.Split(';')
+            return string.Join(";", signedHeaders
                 .Select(s => s.ToLower())
                 .OrderBy(s => s, StringComparer.Ordinal));
         }
