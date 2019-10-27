@@ -24,7 +24,7 @@ only the sender to have the secret.
 MAC authentication involves a set of steps:
 
 1. (Sender) Create a string-to-sign including: 
-  a. A canonical representation of the request, hashed using SHA256.
+  a. A canonical representation of the request, hashed using MD5.
   b. Identitify information about the sender (e.g. the sender's unique identifier).
   c. Timestamp of the request.
 2. (Sender) Create a signature using the string-to-sign and the encryption key.

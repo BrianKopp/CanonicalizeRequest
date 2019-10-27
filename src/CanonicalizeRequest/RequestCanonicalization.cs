@@ -57,7 +57,7 @@ namespace CanonicalizeRequest
         }
         public static string CanonicalizePath(string path)
         {
-            return WebUtility.UrlEncode(path.Trim().ToLower());
+            return path.Trim().ToLower();
         }
         public static string CanonicalizeQueryParameters(IEnumerable<KeyValuePair<string, StringValues>> queryParameters)
         {
@@ -90,18 +90,20 @@ namespace CanonicalizeRequest
         }
         public static string CanonicalizeHeaders(IDictionary<string, StringValues> headers)
         {
-            var headersAndLowercaseHeaders = headers.Keys.ToDictionary(k => k, k => k.ToLower());
-            var originalHeadersSortedByLowercase = headersAndLowercaseHeaders
-                .OrderBy(kvp => kvp.Value, StringComparer.Ordinal)
-                .Select(kvp => kvp.Key);
-            
+            var headerKeysCaseInsitive = headers.Keys.Select(kvp => kvp.ToLower()).Distinct().ToDictionary(
+                v => v, v => headers.Keys.Where(k => string.Compare(k, v, true) == 0));
+            var lowercaseHeadersOrdered = headerKeysCaseInsitive
+                .Select(kvp => kvp.Key)
+                .OrderBy(k => k, StringComparer.Ordinal);
+
             var headerRepresentations = new List<string>();
             var regex = new Regex("[ ]{2,}", RegexOptions.None);
-            foreach(var originalHeader in originalHeadersSortedByLowercase)
+            foreach(var lowercaseHeader in lowercaseHeadersOrdered)
             {
-                var headerValues = headers[originalHeader].Select(v => regex.Replace(v.Trim(), " "));
-                var headerValuesString = string.Join(",", headerValues);
-                headerRepresentations.Add($"{headersAndLowercaseHeaders[originalHeader]}={headerValuesString}");
+                var headerValues = headerKeysCaseInsitive[lowercaseHeader].SelectMany(k => headers[k]);
+                var headerValuesTrimmedAndSorted = headerValues.Select(v => regex.Replace(v.Trim(), " ")).OrderBy(v => v, StringComparer.Ordinal);
+                var headerValuesString = string.Join(",", headerValuesTrimmedAndSorted);
+                headerRepresentations.Add($"{lowercaseHeader}={headerValuesString}");
             }
 
             return string.Join("\n", headerRepresentations);
@@ -118,9 +120,9 @@ namespace CanonicalizeRequest
         }
         public static string HashStringSha256(string s)
         {
-            using (var sha256 = SHA256.Create())
+            using (var md5 = MD5.Create())
             {
-                var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
+                var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(s));
                 var sb = new StringBuilder();
                 foreach (var b in hash)
                 {
