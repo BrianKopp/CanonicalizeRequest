@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using Microsoft.AspNetCore.Http;
 
 namespace CanonicalizeRequest
 {
@@ -6,19 +7,17 @@ namespace CanonicalizeRequest
     {
         private readonly long SecondsDriftAllowed;
         private readonly ICryptoVerifier Verifier;
-        private readonly ITimestampProvider TimestampProvider;
-        public RequestAuthenticator(ICryptoVerifier verifier, long secondsDriftAllowed, ITimestampProvider timestampProvider)
+        public RequestAuthenticator(ICryptoVerifier verifier, long secondsDriftAllowed)
         {
             Verifier = verifier;
             SecondsDriftAllowed = secondsDriftAllowed;
-            TimestampProvider = timestampProvider;
         }
         public bool IsRequestAuthentic(HttpRequest request)
         {
             try
             {
                 var parts = RequestAuthenticationParts.MakeFromRequest(request);
-                if (!IsTimestampValid(parts.SignatureTimestamp, TimestampProvider.Now()))
+                if (!IsTimestampValid(parts.SignatureTimestamp, GetCurrentTimestamp()))
                 {
                     return false;
                 }
@@ -34,6 +33,10 @@ namespace CanonicalizeRequest
             {
                 return false;
             }
+        }
+        private long GetCurrentTimestamp()
+        {
+            return (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
         }
         public bool IsTimestampValid(long timestamp, long currentTimestamp)
         {
